@@ -155,20 +155,6 @@ function reLogin() {
         alert("UDID取得に失敗しました: " + err);
     });
 }
-
-function getUDID() {
-    return new Promise((resolve, reject) => {
-        var WebUDID = h5gg.loadPlugin("WebUDID", "h5ggWebUdid.dylib");
-        if (!WebUDID) {
-            reject("dylibロード失敗");
-        }
-        setTimeout(() => {
-            WebUDID.webudid("h5ggWebUdid", function (udid) {
-                resolve(udid);
-            });
-        }, 500);
-    });
-}
 </script>
 
 </body>
