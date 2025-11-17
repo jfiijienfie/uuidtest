@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UDID 認証システム</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    #message {
+        margin: 15px 0;
+        font-size: 16px;
+        color: #555;
+    }
+
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background: #4facfe;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    button:hover {
+        background: #3b8dfc;
+    }
+
+    .note {
+        font-size: 14px;
+        color: #777;
+        margin-top: 15px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>UDID 認証システム</h1>
+    <div id="message">状態を確認しています...</div>
+
+    <button onclick="checkLogin()">ログイン</button>
+    <button onclick="registerUser()">新規登録</button>
+    <button onclick="reLogin()">切れた方</button>
+
+    <div class="note">※ 管理者承認後にアクセス可能です</div>
+</div>
+
+<script>
+const redirectURL = "script.html";
+
+window.onload = () => {
+    let savedUDID = localStorage.getItem("udid");
+    if (savedUDID) {
+        document.getElementById("message").innerText = "UDID確認中...";
+        fetch("check.php?udid=" + savedUDID)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "allowed") {
+                    window.location.href = redirectURL;
+                } else {
+                    document.getElementById("message").innerText = "ログインしてください";
+                }
+            });
+    } else {
+        document.getElementById("message").innerText = "UDIDが未登録です";
+    }
+};
+
+function checkLogin() {
+    let savedUDID = localStorage.getItem("udid");
+    if (!savedUDID) {
+        alert("UDIDが保存されていません");
+        return;
+    }
+    fetch("check.php?udid=" + savedUDID)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "allowed") {
+                window.location.href = redirectURL;
+            } else {
+                alert("許可されていません");
+            }
+        });
+}
+
+function registerUser() {
+    let discordId = prompt("Discord IDを入力してください");
+    if (!discordId) {
+        alert("キャンセルされました");
+        return;
+    }
+
+    getUDID().then(udid => {
+        fetch("register.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ udid, discord_id: discordId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "already_registered") {
+                alert("このUDIDは登録済みです");
+            } else {
+                localStorage.setItem("udid", udid);
+                alert("登録完了（管理者の承認待ち）");
+            }
+        });
+    }).catch(err => {
+        alert("UDID取得に失敗しました: " + err);
+    });
+}
+
+function reLogin() {
+    getUDID().then(udid => {
+        fetch("check.php?udid=" + udid)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "allowed") {
+                    localStorage.setItem("udid", udid);
+                    window.location.href = redirectURL;
+                } else {
+                    alert("ログインできません");
+                }
+            });
+    }).catch(err => {
+        alert("UDID取得に失敗しました: " + err);
+    });
+}
+
+function getUDID() {
+    return new Promise((resolve, reject) => {
+        var WebUDID = h5gg.loadPlugin("WebUDID", "h5ggWebUdid.dylib");
+        if (!WebUDID) {
+            reject("dylibロード失敗");
+        }
+        setTimeout(() => {
+            WebUDID.webudid("h5ggWebUdid", function (udid) {
+                resolve(udid);
+            });
+        }, 500);
+    });
+}
+</script>
+
+</body>
+</html>

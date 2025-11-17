@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>管理者ページ</title>
+<style>
+table { width: 90%; margin: 20px auto; border-collapse: collapse; }
+th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+button { padding: 5px 10px; margin: 2px; }
+</style>
+</head>
+<body>
+
+<h1 style="text-align:center;">管理者ページ</h1>
+<table>
+<thead>
+<tr><th>UDID</th><th>Discord ID</th><th>Status</th><th>操作</th></tr>
+</thead>
+<tbody id="userTable"></tbody>
+</table>
+
+<script>
+function loadUsers() {
+    fetch("admin.php")
+    .then(res => res.json())
+    .then(data => {
+        let html = "";
+        data.users.forEach(user => {
+            html += `<tr>
+                <td>${user.udid}</td>
+                <td>${user.discord_id}</td>
+                <td>${user.status}</td>
+                <td>
+                    <button onclick="updateStatus('${user.udid}','allowed')">許可</button>
+                    <button onclick="updateStatus('${user.udid}','blocked')">拒否</button>
+                    <button onclick="deleteUser('${user.udid}')">削除</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById("userTable").innerHTML = html;
+    });
+}
+
+function updateStatus(udid, status) {
+    fetch("admin.php", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ udid, status })
+    }).then(() => loadUsers());
+}
+
+function deleteUser(udid) {
+    fetch("admin.php", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ udid })
+    }).then(() => loadUsers());
+}
+
+window.onload = loadUsers;
+</script>
+
+</body>
+</html>
