@@ -96,7 +96,7 @@
 
 <script>
   // ページ遷移先
-  const REDIRECT_URL = "main.html";
+  const REDIRECT_URL = "https://ss153429.stars.ne.jp/A認証/main.html";
 
   // RFC4122 準拠の UUID v4 を生成
   function generateUUIDv4() {
@@ -143,13 +143,13 @@
   }
 
   async function fetchUsers() {
-    const res = await fetch("./users.json?_=" + Date.now(), { cache: "no-store" });
+    const res = await fetch("https://ss153429.stars.ne.jp/A認証/users.json?_=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("users.json 読み込み失敗");
     return res.json();
   }
 
   async function fetchAllowed() {
-    const res = await fetch("./allowed.json?_=" + Date.now(), { cache: "no-store" });
+    const res = await fetch("https://ss153429.stars.ne.jp/A認証/allowed.json?_=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("allowed.json 読み込み失敗");
     return res.json();
   }
@@ -187,7 +187,7 @@
     if (!discordId) return;
 
     try {
-      const res = await fetch("./register.php", {
+      const res = await fetch("https://ss153429.stars.ne.jp/A認証/register.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uuid, id: discordId })
