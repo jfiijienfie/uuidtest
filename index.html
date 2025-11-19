@@ -1,161 +1,220 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<meta charset="utf-8">
-<title>UDID 認証システム</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
+  <meta charset="utf-8">
+  <title>UUID 認証システム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    .back {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #eef2f7;
     }
 
-    .container {
-        background: #fff;
-        padding: 30px 40px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        width: 90%;
-        max-width: 400px;
+    .card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
     }
 
     h1 {
-        margin-bottom: 20px;
-        color: #333;
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+      color: #333;
     }
 
-    #message {
-        margin: 15px 0;
-        font-size: 16px;
-        color: #555;
+    p {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 0.2rem 0 1rem;
     }
 
     button {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        font-size: 16px;
-        font-weight: bold;
-        color: #fff;
-        background: #4facfe;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background 0.3s ease;
+      margin: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 0.5rem;
+      background: #4a6cf7;
+      color: white;
+      font-size: 1rem;
+      transition: 0.2s;
     }
 
     button:hover {
-        background: #3b8dfc;
+      background: #3753c8;
     }
 
-    .note {
-        font-size: 14px;
-        color: #777;
-        margin-top: 15px;
+    #uuid-box {
+      margin-top: 1.2rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background: #f6f8fa;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #333;
+      text-align: left;
+      word-break: break-all;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.05);
     }
-</style>
+
+    strong {
+      color: #555;
+    }
+
+    .hint {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 0.6rem;
+    }
+  </style>
 </head>
 <body>
+<div class="back">
+  <div class="card">
+    <h1>UUID 認証システム</h1>
+    <p>この端末内で一意のUUIDを生成・保存して認証します。</p>
 
-<div class="container">
-    <h1>UDID 認証システム</h1>
-    <div id="message">状態を確認しています...</div>
+    <button id="registerBtn">新規登録</button>
+    <button id="loginBtn">ログイン</button>
 
-    <button onclick="checkLogin()">ログイン</button>
-    <button onclick="registerUser()">新規登録</button>
-    <button onclick="reLogin()">切れた方</button>
-
-    <div class="note">※ 管理者承認後にアクセス可能です</div>
+    <div id="uuid-box">
+      <strong>UUID:</strong> <span id="uuid">(未取得)</span>
+    </div>
+    <p class="hint">ブラウザのストレージをクリアするとUUIDは変わります。</p>
+  </div>
 </div>
 
 <script>
-const redirectURL = "script.html";
+  // ページ遷移先
+  const REDIRECT_URL = "main.html";
 
-window.onload = () => {
-    let savedUDID = localStorage.getItem("udid");
-    if (savedUDID) {
-        document.getElementById("message").innerText = "UDID確認中...";
-        fetch("check.php?udid=" + savedUDID)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "allowed") {
-                    window.location.href = redirectURL;
-                } else {
-                    document.getElementById("message").innerText = "ログインしてください";
-                }
-            });
-    } else {
-        document.getElementById("message").innerText = "UDIDが未登録です";
-    }
-};
-
-function checkLogin() {
-    let savedUDID = localStorage.getItem("udid");
-    if (!savedUDID) {
-        alert("UDIDが保存されていません");
-        return;
-    }
-    fetch("check.php?udid=" + savedUDID)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "allowed") {
-                window.location.href = redirectURL;
-            } else {
-                alert("許可されていません");
-            }
-        });
-}
-
-function registerUser() {
-    let discordId = prompt("Discord IDを入力してください");
-    if (!discordId) {
-        alert("キャンセルされました");
-        return;
-    }
-
-    getUDID().then(udid => {
-        fetch("register.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ udid, discord_id: discordId })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.message === "already_registered") {
-                alert("このUDIDは登録済みです");
-            } else {
-                localStorage.setItem("udid", udid);
-                alert("登録完了（管理者の承認待ち）");
-            }
-        });
-    }).catch(err => {
-        alert("UDID取得に失敗しました: " + err);
+  // RFC4122 準拠の UUID v4 を生成
+  function generateUUIDv4() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      const v = c === "x" ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
     });
-}
+  }
 
-function reLogin() {
-    getUDID().then(udid => {
-        fetch("check.php?udid=" + udid)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "allowed") {
-                    localStorage.setItem("udid", udid);
-                    window.location.href = redirectURL;
-                } else {
-                    alert("ログインできません");
-                }
-            });
-    }).catch(err => {
-        alert("UDID取得に失敗しました: " + err);
-    });
-}
+  // 可能なら暗号学的ランダムを使用（フォールバックあり）
+  function generateUUID() {
+    if (window.crypto && crypto.getRandomValues) {
+      const buf = new Uint8Array(16);
+      crypto.getRandomValues(buf);
+      // バージョンとバリアント設定
+      buf[6] = (buf[6] & 0x0f) | 0x40; // version 4
+      buf[8] = (buf[8] & 0x3f) | 0x80; // variant
+      const hex = [...buf].map(b => b.toString(16).padStart(2, "0"));
+      return [
+        hex.slice(0, 4).join(""),
+        hex.slice(4, 6).join(""),
+        hex.slice(6, 8).join(""),
+        hex.slice(8, 10).join(""),
+        hex.slice(10, 16).join("")
+      ].join("-");
+    }
+    return generateUUIDv4();
+  }
+
+  // h5gg不要：localStorageでUUIDを永続化
+  function getUUID() {
+    try {
+      let uuid = localStorage.getItem("generatedUUID");
+      if (!uuid) {
+        uuid = generateUUID();
+        localStorage.setItem("generatedUUID", uuid);
+      }
+      return uuid;
+    } catch (e) {
+      alert("UUID保存エラー: " + e.message);
+      return null;
+    }
+  }
+
+  async function fetchUsers() {
+    const res = await fetch("./users.json?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("users.json 読み込み失敗");
+    return res.json();
+  }
+
+  async function fetchAllowed() {
+    const res = await fetch("./allowed.json?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("allowed.json 読み込み失敗");
+    return res.json();
+  }
+
+  async function loginFlow() {
+    const uuid = getUUID();
+    if (!uuid) return;
+
+    document.getElementById("uuid").textContent = uuid;
+
+    try {
+      const [users, allowed] = await Promise.all([fetchUsers(), fetchAllowed()]);
+
+      if (users[uuid] && allowed[uuid]) {
+        alert("ようこそ " + users[uuid].id + " さん！");
+        localStorage.setItem("loggedInUUID", uuid);
+        location.href = REDIRECT_URL;
+      } else if (!users[uuid]) {
+        alert("エラー: ユーザーが未登録です");
+      } else if (!allowed[uuid]) {
+        alert("エラー: 管理者の許可がありません");
+      }
+    } catch (e) {
+      alert("ログイン失敗: " + e.message);
+    }
+  }
+
+  async function registerFlow() {
+    const uuid = getUUID();
+    if (!uuid) return;
+
+    document.getElementById("uuid").textContent = uuid;
+
+    const discordId = prompt("あなたのDiscord IDを入力してください:");
+    if (!discordId) return;
+
+    try {
+      const res = await fetch("./register.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uuid, id: discordId })
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert("登録完了！管理者の承認後にログイン可能です");
+      } else {
+        alert("登録失敗: " + (json.error || "不明なエラー"));
+      }
+    } catch (e) {
+      alert("通信エラー: " + e.message);
+    }
+  }
+
+  document.getElementById("registerBtn").addEventListener("click", registerFlow);
+  document.getElementById("loginBtn").addEventListener("click", loginFlow);
+
+  window.addEventListener("DOMContentLoaded", () => {
+    // 初回表示時にUUIDを画面へ反映
+    const uuid = getUUID();
+    if (uuid) document.getElementById("uuid").textContent = uuid;
+
+    // 自動ログインをしたいなら以下を有効化
+    // loginFlow();
+  });
 </script>
-
 </body>
 </html>
+
